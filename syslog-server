@@ -1,0 +1,92 @@
+
+
+                         Syslog server
+
+Syslog is a way for network devices to send event messages to a logging server – usually known as a Syslog server.
+
+Configure rsyslog to receive UDP logs and define a filter where you want to store the logs.
+
+vi /etc/rsyslog.conf
+
+Please find the below lines in mentioned file and uncomment same below
+# Provides TCP syslog reception
+#$ModLoad imtcp
+#$InputTCPServerRun 514
+module(load="imudp") # needs to be done just once
+input(type="imudp" port="514")
+module(load="imtcp") # needs to be done just once
+input(type="imtcp" port="514")
+
+####Use below templete to save the log files location
+
+“$template RemoteLogs,"/var/log/remoteserverlog/%FROMHOST-IP%/%PROGRAMNAME%.log" 
+*.* ?RemoteLogs
+
+###Above templete store the log in below location :-
+/var/log/remoteserverlog
+
+##Please  start/Restart/Enable the rsyslog process.
+  $service rsyslog restart
+  $ systemctl enable rsyslog.service
+ 
+###Please Verify if you are receiving the logs from client server. If you face any issue please find below details,
+Troubleshooting commands#
+service rsyslog status ##Verify that rsyslog is running.
+
+# service rsyslog status
+rsyslog start/running, process 26527
+
+netstat -na | grep ":<defined port>" Is rsyslog listening on the right port?
+
+# netstat -na | grep :514
+udp        0      0 0.0.0.0:514             0.0.0.0:*
+
+then Check if you get new log entries.
+
+
+
+
+Syslog server client side setup : -
+Now we will configure other CentOS 7 hosts on our network to send log message streams at the freshly built Syslog server.
+1.Setup syslog configuration for centos Client: -
+Configure the  file to send data to our Syslog server via UDP port 514
+
+##Specify the correct hostname of the centralized Syslog server with below details,
+
+local6.*    @1.2.3.4:514
+local6.*    @@1.2.3.4:514
+
+##Cofigure the /etc/bashrc, Open the bashrc file and add below line at the bottom of file and save the same 
+
+export PROMPT_COMMAND='RETRN_VAL=$?;/bin/logger -p local6.debug "$(whoami) [$$]: $(history 1 | sed "s/^[ ]*[0-9]\+[ ]*//" ) [$RETRN_VAL]"'
+
+Enable and start/restart the Rsyslog service
+$ systemctl enable rsyslog.service 
+$ systemctl systemctl restart rsyslog.service 
+$ systemctl status rsyslog.service
+
+2.Setup syslog configuration for Ubuntu Client: -
+Follow these instructions
+1. Modify the /etc/bash.bashrc
+2. Append the below line the end of that file
+ export PROMPT_COMMAND='RETRN_VAL=$?;logger -p local6.debug "$(whoami) [$$]: $(history 1 | sed "s/[ ][0-9]+[ ]//" ) [$RETRN_VAL]"'
+
+3. Create a new file
+vim /etc/rsyslog.d/bash.conf
+4.Add the line to the file
+local6.*    /var/log/commands.log
+
+
+5. Configure /etc/rsyslog.conf with adding below line in file
+
+local6.*    @1.2.3.4:514
+local6.*    @@1.2.3.4:514
+
+6.Restart/Start/enable the rsyslog service
+
+refer below document if you face any issue with Ubuntu server 
+https://askubuntu.com/questions/118884/how-can-i-get-the-command-log-of-a-particular-user-on-ubuntu-server
+
+
+
+
