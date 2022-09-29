@@ -1,0 +1,33 @@
+#!/bin/bash
+
+TMP=$(mktemp)
+PATH="/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin"
+while IFS=";" read -r ip user pass port id site;
+do
+# create expect script
+cat > $TMP << EOF
+#exp_internal 1 # Uncomment for debug
+set timeout 5
+spawn ssh -o StrictHostKeyChecking=no -p$port $user+t@$ip
+log_user 1
+match_max 100000
+expect -exact "password:"
+send -- "$pass\r"
+expect " > "
+$nazwa send -- "/snmp community set public name=aroundpeople\r"
+expect " > "
+$nazwa send -- "/snmp set contact=info@aroundpeople.cloud enabled=yes location=$id-$site\r"
+send -- "quit\r"
+expect eof
+EOF
+
+# run expect script
+#cat $TMP # Uncomment for debug
+expect -f $TMP
+echo $TMP >> log.log
+# remove expect script
+rm $TMP
+
+done < router.csv;
+
+
