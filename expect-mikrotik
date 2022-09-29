@@ -14,9 +14,9 @@ match_max 100000
 expect -exact "password:"
 send -- "$pass\r"
 expect " > "
-$nazwa send -- "/snmp community set public name=aroundpeople\r"
+$nazwa send -- "/snmp community set public name=#######\r"
 expect " > "
-$nazwa send -- "/snmp set contact=info@aroundpeople.cloud enabled=yes location=$id-$site\r"
+$nazwa send -- "/snmp set contact=####### enabled=yes location=$id-$site\r"
 send -- "quit\r"
 expect eof
 EOF
